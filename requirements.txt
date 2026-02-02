@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+requests
+python-dotenv
+pydantic
+streamlit
+twilio
+fitbit
+google-generative-ai

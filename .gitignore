@@ -1,0 +1,22 @@
+# Virtual environments
+agent_env/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Secrets / tokens
+fitbit_tokens.json
+
+# Logs
+daily_log.json
+
+# LangGraph / agent memory (optional)
+*.sqlite
+
+# OS
+.DS_Store

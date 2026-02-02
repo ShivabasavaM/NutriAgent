@@ -1,0 +1,13 @@
+{
+    "current_weight": 55,
+    "target_weight": 60,
+    "daily_target": 2400,
+    "macros": {
+        "p": 150,
+        "c": 280,
+        "f": 75
+    },
+    "strategy_note": "Surplus for hypertrophy",
+    "start_date": "2026-02-02",
+    "status": "ACTIVE"
+}
