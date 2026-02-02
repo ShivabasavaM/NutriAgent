@@ -1,27 +1,27 @@
-# NutriAgent: AI-Powered Personal Fitness Coach 🤖💪
+# Metabolic Health Coach | LangGraph & Biometric Orchestration 
 
 NutriAgent is an autonomous "agentic" AI application that acts as a personalized health coach. It connects your real-world activity data (via Fitbit) with a generative AI brain (Google Gemini) to offer real-time dietary advice, calorie tracking, and meal planning.
 
 Unlike standard chatbots, NutriAgent has a "nervous system"—it senses your actual physical stats and remembers what you eat.
 
-## 🌟 Key Features (Working)
+##  Key Features (Working)
 
-### 1. 🧠 The "Brain" (Google Gemini 2.5)
+### 1. The "Brain" (Google Gemini 2.5)
 * **Contextual Coaching:** Remembers your goals (e.g., "Bulking", "Weight Loss") and daily progress.
 * **Adaptive Advice:** Suggests meals dynamically based on your *remaining* calories for the day.
 * **Culturally Aware:** Designed to understand and recommend diverse cuisines (Indian & Global) without generic defaults.
 
-### 2. ⌚ Fitbit "Nervous System"
+### 2. Fitbit "Nervous System"
 * **Live Calorie Tracking:** Automatically fetches "Calories Burned" from your Fitbit device every time you interact.
 * **Sleep Monitoring:** Pulls last night's sleep duration to contextually adjust energy recommendations.
 * **Token Management:** Self-healing authentication system that automatically refreshes Fitbit OAuth2 tokens (access & refresh) so the connection never breaks.
 
-### 3. 🍎 The "Stomach" (Persistent Food Logging)
+### 3. The "Stomach" (Persistent Food Logging)
 * **Daily Food Diary:** Tracks every meal you log (e.g., "I ate 2 idlis").
 * **Math Engine:** Automatically estimates calories for logged items and subtracts them from your daily goal.
 * **Daily Reset:** Automatically wipes the log at midnight to start a fresh day.
 
-### 4. 💬 Interface
+### 4. Interface
 * **Streamlit Chat UI:** A clean, chat-based interface to talk to the agent.
 * **Mock WhatsApp Output:** Simulation of sending alerts/summaries to a messaging platform.
 
