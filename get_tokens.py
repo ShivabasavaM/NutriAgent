@@ -1,5 +1,4 @@
 import os
-import json
 import base64
 import requests
 import hashlib
@@ -7,22 +6,25 @@ import secrets
 import time
 from urllib.parse import urlencode
 from dotenv import load_dotenv
+from app import database
 
 load_dotenv()
 
 CLIENT_ID = os.getenv("FITBIT_CLIENT_ID")
 CLIENT_SECRET = os.getenv("FITBIT_CLIENT_SECRET")
 REDIRECT_URI = "http://localhost:8080"
-TOKEN_FILE = "fitbit_tokens.json"
+# TOKEN_FILE = "fitbit_tokens.json"
 
-def save_tokens(tokens):
-    # Add an expiry timestamp (now + seconds)
-    tokens["expires_at"] = time.time() + tokens["expires_in"]
-    with open(TOKEN_FILE, "w") as f:
-        json.dump(tokens, f, indent=4)
-    print(f"\n💾 Saved fresh tokens to {TOKEN_FILE}")
+# def save_tokens(tokens):
+#     # Add an expiry timestamp (now + seconds)
+#     tokens["expires_at"] = time.time() + tokens["expires_in"]
+#     with open(TOKEN_FILE, "w") as f:
+#         json.dump(tokens, f, indent=4)
+#     print(f"\n💾 Saved fresh tokens to {TOKEN_FILE}")
 
 def generate_tokens():
+
+    database.init_db()
     if not CLIENT_ID or not CLIENT_SECRET:
         print("❌ Error: Missing CLIENT_ID/SECRET in .env")
         return
@@ -68,8 +70,10 @@ def generate_tokens():
 
     response = requests.post(token_url, headers=headers, data=data)
     if response.status_code == 200:
-        save_tokens(response.json())
-        print("✅ SUCCESS! You are ready to run the app.")
+        tokens=response.json()
+        expires_at = time.time() + tokens["expires_in"]
+        database.update_token(tokens["access_token"],tokens["refresh_token"], expires_at)
+        print("SUCCESS! Tokens saved to the Database. ")
     else:
         print(f"❌ Failed: {response.text}")
 

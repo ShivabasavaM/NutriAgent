@@ -1,58 +1,78 @@
 import os
 import requests
 from dotenv import load_dotenv
+from langchain_core.tools import tool
+from app.fitbit_client import FitbitClient
+from app import database
+import sqlite3
+
+fitbit = FitbitClient()
 
 load_dotenv()
 
-def find_healthy_food(lat: float, lng: float):
-    """
-    Searches for RESTAURANTS (not furniture stores) nearby using Google Places API (New).
-    """
-    api_key = os.getenv("GOOGLE_API_KEY")
-    url = "https://places.googleapis.com/v1/places:searchNearby"
+# def find_healthy_food(lat: float, lng: float):
+#     """
+#     Searches for RESTAURANTS (not furniture stores) nearby using Google Places API (New).
+#     """
+#     api_key = os.getenv("GOOGLE_API_KEY")
+#     url = "https://places.googleapis.com/v1/places:searchNearby"
     
-    headers = {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": api_key,
-        # We only ask for the specific fields we need to save data/latency
-        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.googleMapsUri,places.types,places.rating"
-    }
+#     headers = {
+#         "Content-Type": "application/json",
+#         "X-Goog-Api-Key": api_key,
+#         # We only ask for the specific fields we need to save data/latency
+#         "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.googleMapsUri,places.types,places.rating"
+#     }
     
-    payload = {
-        "includedTypes": ["restaurant", "indian_restaurant", "vegetarian_restaurant"],
-        "excludedTypes": ["furniture_store", "lodging"], # Explicitly block IKEA/Hotels if needed
-        "maxResultCount": 3,
-        "locationRestriction": {
-            "circle": {
-                "center": {
-                    "latitude": lat,
-                    "longitude": lng
-                },
-                "radius": 1000.0 # Look within 1 km (Tight radius for "Nearby")
-            }
-        },
-        "rankPreference": "DISTANCE" # Sort by closest first
-    }
+#     payload = {
+#         "includedTypes": ["restaurant", "indian_restaurant", "vegetarian_restaurant"],
+#         "excludedTypes": ["furniture_store", "lodging"], # Explicitly block IKEA/Hotels if needed
+#         "maxResultCount": 3,
+#         "locationRestriction": {
+#             "circle": {
+#                 "center": {
+#                     "latitude": lat,
+#                     "longitude": lng
+#                 },
+#                 "radius": 1000.0 # Look within 1 km (Tight radius for "Nearby")
+#             }
+#         },
+#         "rankPreference": "DISTANCE" # Sort by closest first
+#     }
     
-    try:
-        response = requests.post(url, json=payload, headers=headers)
-        data = response.json()
+#     try:
+#         response = requests.post(url, json=payload, headers=headers)
+#         data = response.json()
         
-        places = data.get("places", [])
-        if not places:
-            return "No restaurants found within 1km. Try sending a new location?"
+#         places = data.get("places", [])
+#         if not places:
+#             return "No restaurants found within 1km. Try sending a new location?"
             
-        # Format the top result
-        top_place = places[0]
-        name = top_place.get("displayName", {}).get("text", "Unknown Place")
-        maps_link = top_place.get("googleMapsUri", "No Link")
-        rating = top_place.get("rating", "N/A")
+#         # Format the top result
+#         top_place = places[0]
+#         name = top_place.get("displayName", {}).get("text", "Unknown Place")
+#         maps_link = top_place.get("googleMapsUri", "No Link")
+#         rating = top_place.get("rating", "N/A")
         
-        return f"{name} ({rating}⭐) - {maps_link}"
+#         return f"{name} ({rating}⭐) - {maps_link}"
         
-    except Exception as e:
-        print(f"Error searching Google Maps: {e}")
-        return "Food search failed (Check Console)."
+#     except Exception as e:
+#         print(f"Error searching Google Maps: {e}")
+#         return "Food search failed (Check Console)."
+@tool
+def get_health_status():
+    """Use this tool to fetch the user's daily calorie goal and the live calories they have burned today from Fitbit."""
+    conn = sqlite3.connect(database.DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT daily_calorie_target FROM users WHERE id = 1")
+    row = cursor.fetchone()
+    cursor.close()
+
+    target = row[0] if row in row[0] else 2000
+
+    burned = fitbit.get_calories_today()
+
+    return f"User Target:{target} calories. Fitbit Calories Burned Today: {burned}."
 
 def send_whatsapp(message: str):
     """

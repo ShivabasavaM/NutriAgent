@@ -1,14 +1,12 @@
 import os
-import json
 import time
 import requests
 import base64
 from datetime import datetime
 from dotenv import load_dotenv
+from app import database
 
 load_dotenv()
-
-TOKEN_FILE = "fitbit_tokens.json"
 
 class FitbitClient:
     def __init__(self):
@@ -18,16 +16,18 @@ class FitbitClient:
 
     def load_tokens(self):
         """Loads tokens from the JSON file."""
-        if not os.path.exists(TOKEN_FILE):
-            print("❌ Error: fitbit_tokens.json not found. Run get_tokens.py first.")
-            return None
-        try:
-            with open(TOKEN_FILE, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"❌ Error loading tokens: {e}")
-            return None
-    # ... existing code ...
+        tokens = database.get_tokens()
+        if not tokens:
+            print("Error: Tokens not found in DB. Run get_tokens.py first.")
+        return tokens
+        
+    def save_tokens(self, tokens):
+        """Updates SQLite with new tokens."""
+        expires_at = time.time() + tokens.get("expires_in",28800)
+        database.update_tokens(tokens["access_token"],tokens["refresh_token"],expires_at)
+        self.tokens = self.load_tokens()
+        print("[Fitbit] Tokens refreshed and saved to SQLite.")
+
 
     def get_sleep_today(self):
         """Fetches total sleep minutes for today."""
@@ -51,17 +51,6 @@ class FitbitClient:
         else:
             print(f"❌ [Fitbit] Sleep Error: {response.text}")
             return 0
-
-    def save_tokens(self, tokens):
-        """Updates the JSON file with new tokens."""
-        # Calculate expiry if not present
-        if "expires_at" not in tokens:
-            tokens["expires_at"] = time.time() + tokens.get("expires_in", 28800)
-            
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f, indent=4)
-        self.tokens = tokens # Update memory
-        print("💾 [Fitbit] Tokens refreshed and saved to JSON.")
 
     def _get_headers(self):
         if not self.tokens: return {}
@@ -94,25 +83,24 @@ class FitbitClient:
             return False
 
     def get_calories_today(self):
-        if not self.ensure_active_token(): return 0
-        
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        url = f"https://api.fitbit.com/1/user/-/activities/date/{date_str}.json"
-        
-        print(f"\n📡 [Fitbit] Fetching data for {date_str}...")
-        response = requests.get(url, headers=self._get_headers())
-        
-        if response.status_code == 200:
-            cal = response.json().get("summary", {}).get("caloriesOut", 0)
-            print(f"✅ [Fitbit] Calories Burned: {cal}")
-            return cal
-        elif response.status_code == 401:
-            # If 401 happens despite our checks, force one refresh
-            print("⚠️ [Fitbit] Unexpected 401. Forcing refresh...")
-            if self.refresh_token():
-                return self.get_calories_today() # Retry once
-        else:
-            print(f"❌ [Fitbit] API Error: {response.text}")
-            return 0
+            if not self.ensure_active_token(): return 0
+            
+            date_str = datetime.now().strftime("%Y-%m-%d")
+            url = f"https://api.fitbit.com/1/user/-/activities/date/{date_str}.json"
+            
+            print(f"\n📡 [Fitbit] Fetching data for {date_str}...")
+            response = requests.get(url, headers=self._get_headers())
+            
+            if response.status_code == 200:
+                cal = response.json().get("summary", {}).get("activityCalories", 0)
+                print(f"✅ [Fitbit] Active Calories Burned: {cal}")
+                return cal
+            elif response.status_code == 401:
+                print("⚠️ [Fitbit] Unexpected 401. Forcing refresh...")
+                if self.refresh_token():
+                    return self.get_calories_today() 
+            else:
+                print(f"❌ [Fitbit] API Error: {response.text}")
+                return 0
 
 fitbit = FitbitClient()

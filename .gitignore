@@ -1,22 +1,17 @@
-# Virtual environments
-agent_env/
-venv/
-
-# Python cache
-__pycache__/
-*.pyc
-
-# Environment variables
+# Environments
 .env
+venv/
+env/
 
-# Secrets / tokens
-fitbit_tokens.json
-
-# Logs
-daily_log.json
-
-# LangGraph / agent memory (optional)
+# Databases & Old Data Files
 *.sqlite
+*.db
+nutriagent.db
+fitbit_tokens.json
+user_profile.json
+data/
 
-# OS
-.DS_Store
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
